@@ -13,35 +13,6 @@ type Mapper[T any, R any] func(T) R
 // Reducer mengurangi slice T menjadi R
 type Reducer[T any, R any] func(R, T) R
 
-// Filter generic
-// func Filter[T any](items []T, pred Predicate[T]) []T {
-// 	var out []T
-// 	for _, it := range items {
-// 		if pred(it) {
-// 			out = append(out, it)
-// 		}
-// 	}
-// 	return out
-// }
-
-// // Map generic
-// func Map[T any, R any](items []T, mapper Mapper[T, R]) []R {
-// 	out := make([]R, 0, len(items))
-// 	for _, it := range items {
-// 		out = append(out, mapper(it))
-// 	}
-// 	return out
-// }
-
-// // Reduce generic
-// func Reduce[T any, R any](items []T, initial R, reducer Reducer[T, R]) R {
-// 	acc := initial
-// 	for _, it := range items {
-// 		acc = reducer(acc, it)
-// 	}
-// 	return acc
-// }
-
 // Compose: komposisi dua fungsi R->S dan T->R => T->S
 func Compose[T any, R any, S any](f func(R) S, g func(T) R) func(T) S {
 	return func(t T) S {
