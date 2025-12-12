@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// Pure function: transformasi StokHistory + nama bibit + user → JSON
+// Pure function: transformasi StokHistory + nama bibit + user ke JSON
 func mapToJSON(sh models.StokHistory, bibitNama, userNama string) map[string]interface{} {
 	return map[string]interface{}{
 		"id":         sh.ID,

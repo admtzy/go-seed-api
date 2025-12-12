@@ -1,6 +1,6 @@
 package utils
 
-// ---- MAP ----
+// MAP
 func Map[T any, R any](src []T, f func(T) R) []R {
 	dst := make([]R, len(src))
 	for i, v := range src {
@@ -9,7 +9,7 @@ func Map[T any, R any](src []T, f func(T) R) []R {
 	return dst
 }
 
-// ---- FILTER ----
+// FILTER
 func Filter[T any](src []T, f func(T) bool) []T {
 	var res []T
 	for _, v := range src {
@@ -20,7 +20,7 @@ func Filter[T any](src []T, f func(T) bool) []T {
 	return res
 }
 
-// ---- REDUCE ----
+// REDUCE
 func Reduce[T any, R any](items []T, initial R, fn func(R, T) R) R {
 	acc := initial
 	for _, v := range items {
@@ -29,7 +29,6 @@ func Reduce[T any, R any](items []T, initial R, fn func(R, T) R) R {
 	return acc
 }
 
-// ---- Ternary ops (functional style) ----
 func If[T any](cond bool, a, b T) T {
 	if cond {
 		return a

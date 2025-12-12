@@ -116,13 +116,14 @@ func GetBibit(w http.ResponseWriter, r *http.Request) {
 
 	// Map → Summary ONLY
 	type Summary struct {
-		ID   int    `json:"id"`
-		Nama string `json:"nama"`
-		Stok int    `json:"stok"`
+		ID       int    `json:"id"`
+		Nama     string `json:"nama"`
+		Kualitas string `json:"kualitas"`
+		Stok     int    `json:"stok"`
 	}
 
 	result := utils.Map(aktif, func(b models.Bibit) Summary {
-		return Summary{b.ID, b.Nama, b.Stok}
+		return Summary{b.ID, b.Nama, b.Kualitas, b.Stok}
 	})
 
 	// Reduce → Total Stok
