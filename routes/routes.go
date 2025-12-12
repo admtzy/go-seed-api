@@ -14,18 +14,17 @@ func RegisterRoutes() *mux.Router {
 	// Global middleware
 	r.Use(middleware.CORS)
 
-	// OPTIONS (Preflight)
 	r.Methods(http.MethodOptions).HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		},
 	)
 
-	// ===== PUBLIC ROUTES =====
+	// PUBLIC ROUTES
 	r.HandleFunc("/register", handler.Register).Methods("POST")
 	r.HandleFunc("/login", handler.Login).Methods("POST")
 
-	// ===== PROTECTED ROUTES (WAJIB LOGIN) =====
+	// PROTECTED ROUTES (WAJIB LOGIN)
 	protected := r.PathPrefix("/").Subrouter()
 	protected.Use(middleware.Auth)
 

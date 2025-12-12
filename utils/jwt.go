@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("secretkey123") // ganti sesuai kebutuhan
+var jwtKey = []byte("secretkey123")
 
 func GenerateToken(userID int, username, role string) (string, error) {
 
@@ -15,7 +15,7 @@ func GenerateToken(userID int, username, role string) (string, error) {
 		"user_id":  userID,
 		"username": username,
 		"role":     role,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(), // 1 hari
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	return token.SignedString(jwtKey)
