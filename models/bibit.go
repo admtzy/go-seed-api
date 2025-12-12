@@ -13,7 +13,7 @@ type Bibit struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-// Clone mengembalikan salinan (praktik immutable-ish)
+// Clone mengembalikan salinan immutable-ish
 func (b Bibit) Clone() Bibit {
 	return Bibit{
 		ID:         b.ID,
