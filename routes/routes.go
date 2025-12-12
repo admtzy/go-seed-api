@@ -1,7 +1,9 @@
 package routes
 
 import (
-	"go-seed-api/handler" // ⬅️ hanya ini yang diganti
+	"go-seed-api/handler"
+	"go-seed-api/middleware"
+	"net/http"
 
 	"github.com/gorilla/mux"
 )
@@ -9,24 +11,39 @@ import (
 func RegisterRoutes() *mux.Router {
 	r := mux.NewRouter()
 
-	// --- AUTH / USER MANAGEMENT ---
+	// Global middleware
+	r.Use(middleware.CORS)
+
+	// OPTIONS (Preflight)
+	r.Methods(http.MethodOptions).HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		},
+	)
+
+	// ===== PUBLIC ROUTES =====
 	r.HandleFunc("/register", handler.Register).Methods("POST")
 	r.HandleFunc("/login", handler.Login).Methods("POST")
-	r.HandleFunc("/users", handler.GetUsers).Methods("GET")
 
-	// --- BIBIT CRUD ---
-	r.HandleFunc("/bibit", handler.CreateBibit).Methods("POST")
-	r.HandleFunc("/bibit", handler.GetBibit).Methods("GET")
-	// r.HandleFunc("/bibit/{id:[0-9]+}", handler.DeleteBibit).Methods("DELETE")
+	// ===== PROTECTED ROUTES (WAJIB LOGIN) =====
+	protected := r.PathPrefix("/").Subrouter()
+	protected.Use(middleware.Auth)
 
-	// --- UPDATE STOK & HISTORY ---
-	r.HandleFunc("/stok/{id:[0-9]+}", handler.UpdateStok).Methods("PUT")
+	// User
+	protected.HandleFunc("/users", handler.GetUsers).Methods("GET")
 
-	// --- REKOMENDASI ---
-	r.HandleFunc("/rekomendasi", handler.GetRekomendasi).Methods("GET")
+	// Bibit
+	protected.HandleFunc("/bibit", handler.GetBibit).Methods("GET")
+	protected.HandleFunc("/bibit", handler.CreateBibit).Methods("POST")
 
-	// --- LAPORAN ---
-	r.HandleFunc("/laporan", handler.GetLaporan).Methods("GET")
+	// Stok
+	protected.HandleFunc("/stok/{id:[0-9]+}", handler.UpdateStok).Methods("PUT")
+
+	// Rekomendasi
+	protected.HandleFunc("/rekomendasi", handler.GetRekomendasi).Methods("GET")
+
+	// Laporan
+	protected.HandleFunc("/laporan", handler.GetLaporan).Methods("GET")
 
 	return r
 }

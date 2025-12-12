@@ -9,15 +9,12 @@ import (
 	"time"
 
 	"go-seed-api/database"
+	"go-seed-api/middleware"
 	"go-seed-api/models"
 	"go-seed-api/utils"
 
 	"github.com/gorilla/mux"
 )
-
-/* ===========================================================
-   F U N C T I O N A L   P R O G R A M M I N G   S E C T I O N
-=========================================================== */
 
 // Pure function untuk hitung kebutuhan bibit (rekursi)
 func HitungKebutuhanBibit(luas float64) int {
@@ -48,11 +45,6 @@ func ValidatePositive(value int, name string) Validator {
 	}
 }
 
-/* ===========================================================
-	API CONTROLLER
-=========================================================== */
-
-// CREATE BIBIT (Pure logic terpisah dari side-effect)
 func CreateBibit(w http.ResponseWriter, r *http.Request) {
 	var bibit models.Bibit
 
@@ -65,7 +57,9 @@ func CreateBibit(w http.ResponseWriter, r *http.Request) {
 	validations := []Validator{
 		ValidateNotEmpty(bibit.Nama, "Nama bibit"),
 		ValidateNotEmpty(bibit.Kualitas, "Kualitas"),
+		ValidateNotEmpty(bibit.Tanah, "Jenis tanah"),
 		ValidatePositive(bibit.Stok, "Stok"),
+		ValidatePositive(bibit.CurahHujan, "Curah hujan"),
 	}
 
 	for _, v := range validations {
@@ -76,9 +70,11 @@ func CreateBibit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
+
 	const q = `
 		INSERT INTO bibit (nama, kualitas, stok, tanah, curah_hujan, created_at, updated_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$6)`
+		VALUES ($1,$2,$3,$4,$5,$6,$6)
+	`
 
 	_, err := database.DB.Exec(q,
 		bibit.Nama, bibit.Kualitas, bibit.Stok,
@@ -89,7 +85,9 @@ func CreateBibit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, utils.JSON{"message": "Bibit berhasil ditambahkan"})
+	utils.WriteJSON(w, http.StatusCreated, utils.JSON{
+		"message": "Bibit berhasil ditambahkan",
+	})
 }
 
 // GET BIBIT (Map + Filter + Reduce FP COMPLETE)
@@ -147,13 +145,19 @@ func UpdateStok(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewDecoder(r.Body).Decode(&body)
 
+	// Ambil user dari context
+	claims, ok := r.Context().Value(middleware.UserKey).(map[string]interface{})
+	if !ok {
+		utils.WriteError(w, 500, "Gagal membaca user dari context")
+		return
+	}
+	userID := int(claims["user_id"].(float64)) // JWT biasanya float64
+
 	tx, _ := database.DB.Begin()
 	defer tx.Rollback()
 
 	var current int
-	err := tx.QueryRow(`
-		SELECT stok FROM bibit WHERE id=$1 FOR UPDATE`, id).Scan(&current)
-
+	err := tx.QueryRow(`SELECT stok FROM bibit WHERE id=$1 FOR UPDATE`, id).Scan(&current)
 	if err == sql.ErrNoRows {
 		utils.WriteError(w, 404, "Bibit tidak ditemukan")
 		return
@@ -166,13 +170,21 @@ func UpdateStok(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update stok
-	tx.Exec(`UPDATE bibit SET stok=$1,updated_at=$2 WHERE id=$3`,
+	_, err = tx.Exec(`UPDATE bibit SET stok=$1, updated_at=$2 WHERE id=$3`,
 		newStock, time.Now(), id)
+	if err != nil {
+		utils.WriteError(w, 500, err.Error())
+		return
+	}
 
-	// Log history stok
+	// Log history stok dengan user_id
 	tipe := utils.If(body.Delta < 0, "keluar", "masuk")
-	tx.Exec(`INSERT INTO stok_history (bibit_id, tipe, jumlah) VALUES ($1,$2,$3)`,
-		id, tipe, body.Delta)
+	_, err = tx.Exec(`INSERT INTO stok_history (bibit_id, user_id, tipe, jumlah) VALUES ($1, $2, $3, $4)`,
+		id, userID, tipe, body.Delta)
+	if err != nil {
+		utils.WriteError(w, 500, err.Error())
+		return
+	}
 
 	tx.Commit()
 
@@ -188,22 +200,36 @@ func GetRekomendasi(w http.ResponseWriter, r *http.Request) {
 	rain, _ := strconv.Atoi(r.URL.Query().Get("curah"))
 	luas, _ := strconv.ParseFloat(r.URL.Query().Get("luas"), 64)
 
-	// Closure ID request
-	counter := func() func() string {
-		count := 0
-		return func() string {
-			count++
-			return fmt.Sprintf("REQ-%d", count)
-		}
-	}()
-	requestID := counter()
-
+	// Perhitungan kebutuhan menggunakan rekursi
 	kebutuhan := HitungKebutuhanBibit(luas)
 
+	// Ambil bibit yang cocok dari database
+	var bibit models.Bibit
+	err := database.DB.QueryRow(`
+		SELECT id, nama, kualitas, stok 
+		FROM bibit 
+		WHERE LOWER(tanah) = LOWER($1)
+		AND curah_hujan <= $2
+		ORDER BY curah_hujan DESC
+		LIMIT 1
+	`, soil, rain).Scan(
+		&bibit.ID, &bibit.Nama, &bibit.Kualitas, &bibit.Stok,
+	)
+
+	if err != nil {
+		utils.WriteJSON(w, 200, utils.JSON{
+			"tanah":       soil,
+			"curah_hujan": rain,
+			"kebutuhan":   kebutuhan,
+			"rekomendasi": "Tidak ada bibit yang cocok",
+		})
+		return
+	}
+
 	utils.WriteJSON(w, 200, utils.JSON{
-		"id":          requestID,
 		"tanah":       soil,
 		"curah_hujan": rain,
 		"kebutuhan":   kebutuhan,
+		"rekomendasi": bibit,
 	})
 }
