@@ -1,0 +1,27 @@
+CREATE TABLE bibit (
+  id SERIAL PRIMARY KEY,
+  nama VARCHAR(100) NOT NULL,
+  kualitas VARCHAR(50) NOT NULL,
+  stok INT NOT NULL,
+  tanah VARCHAR(50) NOT NULL,
+  curah_hujan INT NOT NULL,
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'user',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE stok_history (
+  id SERIAL PRIMARY KEY,
+  bibit_id INT NOT NULL REFERENCES bibit(id),
+  user_id INT NOT NULL REFERENCES users(id),
+  tipe VARCHAR(10) NOT NULL,
+  jumlah INT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
