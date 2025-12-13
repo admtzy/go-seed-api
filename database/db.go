@@ -10,7 +10,6 @@ import (
 
 var DB *sql.DB
 
-// Connect melakukan side-effect: membuka koneksi DB
 func Connect() error {
 	connStr := "host=localhost user=postgres password=1234 dbname=bibitdb sslmode=disable"
 	var err error

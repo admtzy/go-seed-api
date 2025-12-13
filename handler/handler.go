@@ -14,9 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// =======================
 // BIBIT HANDLER
-// =======================
 func CreateBibit(w http.ResponseWriter, r *http.Request) {
 	var bibit models.Bibit
 	if err := json.NewDecoder(r.Body).Decode(&bibit); err != nil {
@@ -152,9 +150,7 @@ func GetRekomendasi(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// =======================
 // LAPORAN HANDLER
-// =======================
 func GetLaporan(w http.ResponseWriter, r *http.Request) {
 	claims, _ := r.Context().Value(middleware.UserKey).(map[string]interface{})
 	username := ""
@@ -210,9 +206,7 @@ func GetLaporan(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// =======================
 // USER HANDLER
-// =======================
 func Register(w http.ResponseWriter, r *http.Request) {
 	var u models.User
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {

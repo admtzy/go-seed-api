@@ -9,9 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// =======================
 // GENERIC MAP / FILTER / REDUCE
-// =======================
 func Map[T any, R any](list []T, fn func(T) R) []R {
 	result := make([]R, 0, len(list))
 	for _, v := range list {
@@ -38,11 +36,7 @@ func Reduce[T any, R any](list []T, init R, fn func(R, T) R) R {
 	return acc
 }
 
-// =======================
 // PURE BUSINESS LOGIC
-// =======================
-
-// Hitung kebutuhan bibit (rekursi)
 func HitungKebutuhanBibit(luas float64) int {
 	if luas <= 0 {
 		return 0
@@ -84,9 +78,7 @@ func ToUserJSON(u models.User) map[string]interface{} {
 	}
 }
 
-// =======================
 // VALIDATOR HOF
-// =======================
 type Validator func() (bool, string)
 
 func ValidateNotEmpty(field, name string) Validator {
@@ -116,9 +108,7 @@ func ValidatePasswordLength(password string, min int) Validator {
 	}
 }
 
-// =======================
 // HELPER
-// =======================
 func If[T any](cond bool, a, b T) T {
 	if cond {
 		return a
@@ -126,9 +116,7 @@ func If[T any](cond bool, a, b T) T {
 	return b
 }
 
-// =======================
 // JWT GENERATOR
-// =======================
 var jwtKey = []byte("secretkey123")
 
 func GenerateToken(userID int, username, role string) (string, error) {
